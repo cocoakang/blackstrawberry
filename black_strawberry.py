@@ -4,24 +4,8 @@ import requests
 import re
 import random
 import zlib
-import base64
+import time
 
-def decode_base64_and_inflate( b64string ):
-    decoded_data = base64.b64decode( b64string )
-    return zlib.decompress( decoded_data , -15)
-
-def deflate_and_base64_encode( string_val ):
-    zlibbed_str = zlib.compress( string_val )
-    compressed_string = zlibbed_str[2:-4]
-    return base64.b64encode( compressed_string )
-
-def inflate(data):
-    decompress = zlib.decompressobj(
-            -zlib.MAX_WBITS  # see above
-    )
-    inflated = decompress.decompress(data)
-    inflated += decompress.flush()
-    return inflated
 
 def randomUn(n):
     s = pow(10,n-1)
@@ -41,7 +25,7 @@ def getBulletScreen(url):
     albumID = re.findall(r"\d+",re.findall(r"\"albumId\":\d+",r.text)[0])[0]
     channelId = re.findall(r"\d+",re.findall(r"\"channelId\":\d+",r.text)[0])[0]
     duration = re.findall(r"\d+",re.findall(r"\"duration\":\d+",r.text)[0])[0]
-    print(albumID,"\t",channelId,"\t",duration)
+    # print(albumID,"\t",channelId,"\t",duration)
 
     #get the encoded bullet screen
     t = "0000" + tvId
@@ -55,22 +39,30 @@ def getBulletScreen(url):
         bulletUrl = "http://cmts.iqiyi.com/bullet/{}/{}/{}_300_{}.z?rn={}&business=danmu&is_iqiyi=true&is_video_page=true&tvid={}&albumid={}&categoryid={}&qypid=01010021010000000000".format(
             first,second,tvId,i,rn,tvId,albumID,channelId
         )
-        print(bulletUrl)
+        # print(bulletUrl)
         r = requests.get(bulletUrl)
         if(len(r.text) != 0):
             res = zlib.decompress(r.content)
-            res = re.findall(b"<content>.+</content>",res)
-            bullets.extend(res)
+            res_c_t = re.findall(b"<content>.+</content>\n<showTime>\d+</showTime>",res)
+            bullets.extend(res_c_t)
     #uncompress
     return bullets
 
 
     
 if __name__ == "__main__":
-    url = "https://www.iqiyi.com/v_19rr2hvv68.html"
-    results = getBulletScreen(url)
-    f = open("res.txt","w",encoding="utf-8")
-    for frame in results:
-        f.write(bytes.decode(frame[9:-10],encoding = "utf-8"))
-        f.write("\n")
-    f.close()
+    pUrlsF = open("urls.txt","r")
+    saveRoot = "bullets/"
+    urls = pUrlsF.read().split("\n")
+    for i,url in enumerate(urls):
+        print("current video url:",i)
+        bullets = getBulletScreen(url)
+        f = open(saveRoot+"{}.txt".format(i+1),"w",encoding="utf-8")
+        for no,bullet in enumerate(bullets):
+            content = re.findall(b"<content>.+</content>",bullet)[0]
+            time_stamp = re.findall(b"\d+",re.findall(b"<showTime>\d+</showTime>",bullet)[0])[0]
+            f.write("{}: ".format(no+1))
+            f.write("{}".format(time.strftime("%H:%M:%S", time.gmtime( float(time_stamp) ))))
+            f.write(bytes.decode(content[9:-10],encoding = "utf-8"))
+            f.write("\n")
+        f.close()
