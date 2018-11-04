@@ -1,7 +1,7 @@
 # blackstrawberry
 
 ## What is this for?
-This repo is a spider which can download the bullet screens of Aiqiyi videos.
+This repo is a spider which can download the bullet screens from Aiqiyi videos.
 
 ## How to use?
 Environment: Python3.x zlib requests
