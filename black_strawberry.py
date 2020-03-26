@@ -51,7 +51,7 @@ def getBulletScreen(url):
 
     
 if __name__ == "__main__":
-    printf("I am here to destory")
+    printf("I am here to destory again")
     pUrlsF = open("urls.txt","r")
     saveRoot = "bullets/"
     urls = pUrlsF.read().split("\n")
